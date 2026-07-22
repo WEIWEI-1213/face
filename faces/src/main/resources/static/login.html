@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Insert title here</title>
+    <style type="text/css">
+        /**解决浏览器兼容性问题**/
+        *{
+            margin: 0;
+            padding: 0;
+        }
+
+        body{
+            background: url(img/bg.jpg) no-repeat center;
+        }
+        h1{
+            color: #fff;
+            text-align: center;
+            line-height: 80px;
+        }
+        .camera{
+            width:400px;
+            height:400px;
+            margin:0 auto;
+        }
+        .log{
+            width:205px;
+            height:55px;
+            margin: 0 auto;
+        }
+        #login{
+            width:200px;
+            height:50px;
+            background-color: #2196f3;
+            text-align: center;
+            line-height: 50px;
+            color: #fff;
+            border-radius: 10px;
+        }
+        #canvas{display: none;}
+        #name{
+            width:300px;
+            height:50px;
+            margin:0 auto;
+        }
+        .contrl{
+            width:250px;
+            height:55px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<h1>百度云人脸识别登录</h1>
+<div id="name">
+    用户名：<input type="text" name="username" id="username" placeholder="可以不填"/>
+</div>
+
+<div class="camera">
+    <video id="video" width="350" height="200" src="" autoplay></video>
+    <canvas id="canvas" width="350" height="200"></canvas>
+</div>
+<div class="log">
+<button id="login">登录</button>    <br/>
+</div>
+<div class="contrl">
+    <button id="start" onclick="startAuto()">启用自动登录</button>&nbsp;
+    <button id="stop" onclick="stopAuto()">暂停自动登录</button>
+    <button id="toRegister" onclick="location.href='register.html'">人脸采集</button>
+</div>
+
+<script type="text/javascript" src="js/jquery-3.1.0.min.js"></script>
+<script type="text/javascript">
+    /**调用摄像头，获取媒体视频流**/
+    var video = document.getElementById('video');
+    //返回画布二维画图环境
+    var userContext = canvas.getContext("2d");
+    var getUserMedia =
+        //浏览器兼容,表示在火狐、Google、IE等浏览器都可正常支持
+        (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia)
+        //getUserMedia.call(要调用的对象，约束条件，调用成功的函数，调用失败的函数)
+        getUserMedia.call(navigator,{video: true,audio: false},function(localMediaStream){
+        //获取摄像头捕捉的视频流
+        video.srcObject=localMediaStream;
+    },function(e){
+        console.log("获取摄像头失败！！")
+    });
+    //点击按钮注册事件
+    var btn = document.getElementById("login");
+
+    //登录用到的函数
+    function toLogin(){
+        //获取登陆者面部信息
+        userContext.drawImage(video,0,0,350,200);
+        var userImgSrc = document.getElementById("canvas").toDataURL("img/jpg");
+        //拿到bash64格式的照片信息
+        var faceBase = userImgSrc.split(",")[1];
+        //ajax异步请求
+        $.ajax({
+            url: "login",
+            type: "post",
+            data: {"faceBase": faceBase},
+            dataType:"json",
+            success: function(result){
+                if(result.num=="1") {
+                    alert("登录成功!欢迎你，尊敬的用户："+result.username+"!");
+                    location.href = "mainPage.html";
+                }else{
+                    console.log("登录失败！");
+                }
+            }
+        })
+
+    }
+
+    btn.onclick=toLogin;//点击按钮时进行登录
+
+    var timer;
+    function startAuto(){ //每隔3秒自动登录一次
+        timer=setInterval(toLogin,3000);
+    }
+    startAuto();//可以设置开机即自动识别，也可注释掉，点击按钮后才开始自动识别。
+    function stopAuto(){ //关闭自动登录功能
+        clearInterval(timer);
+    }
+
+
+
+
+</script>
+</body>
+</html>
